@@ -3,82 +3,71 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal
-
-from csvdiff.parser import Row, index_rows
-
-
-ChangeKind = Literal["added", "removed", "modified"]
+from typing import Dict, List, Tuple
 
 
 @dataclass
 class RowChange:
-    """Represents a single row-level change between two CSV files."""
+    """Represents a single changed row."""
+    key: str
+    before: dict
+    after: dict
 
-    kind: ChangeKind
-    key: tuple[str, ...]
-    old: Row | None = None
-    new: Row | None = None
-    diff: dict[str, tuple[str, str]] = field(default_factory=dict)
+    @property
+    def changed_fields(self) -> List[str]:
+        """Return list of field names that differ between before and after."""
+        return [
+            k for k in set(self.before) | set(self.after)
+            if self.before.get(k) != self.after.get(k)
+        ]
 
 
 @dataclass
 class DiffResult:
-    """Aggregated diff result between two CSV files."""
+    """Holds the complete diff between two CSV files."""
+    added: List[dict] = field(default_factory=list)
+    removed: List[dict] = field(default_factory=list)
+    changed: List[RowChange] = field(default_factory=list)
 
-    added: list[RowChange] = field(default_factory=list)
-    removed: list[RowChange] = field(default_factory=list)
-    modified: list[RowChange] = field(default_factory=list)
 
-    @property
-    def has_changes(self) -> bool:
-        return bool(self.added or self.removed or self.modified)
+def has_changes(result: DiffResult) -> bool:
+    """Return True if the diff contains any changes."""
+    return bool(result.added or result.removed or result.changed)
 
-    @property
-    def total(self) -> int:
-        return len(self.added) + len(self.removed) + len(self.modified)
+
+def total(result: DiffResult) -> int:
+    """Return total number of change entries."""
+    return len(result.added) + len(result.removed) + len(result.changed)
 
 
 def diff_csv(
-    old_rows: list[Row],
-    new_rows: list[Row],
-    key_columns: list[str],
+    old_index: Dict[str, dict],
+    new_index: Dict[str, dict],
 ) -> DiffResult:
-    """Compute the diff between two lists of CSV rows.
+    """Diff two indexed CSV datasets.
 
     Args:
-        old_rows: Rows from the original CSV.
-        new_rows: Rows from the new CSV.
-        key_columns: Columns used as the composite primary key.
+        old_index: Mapping of key -> row dict for the old file.
+        new_index: Mapping of key -> row dict for the new file.
 
     Returns:
-        A DiffResult containing added, removed, and modified changes.
+        A DiffResult describing all additions, removals, and changes.
     """
-    old_index = index_rows(old_rows, key_columns)
-    new_index = index_rows(new_rows, key_columns)
-
     result = DiffResult()
 
-    old_keys = set(old_index.keys())
-    new_keys = set(new_index.keys())
+    old_keys = set(old_index)
+    new_keys = set(new_index)
 
     for key in sorted(new_keys - old_keys):
-        result.added.append(RowChange(kind="added", key=key, new=new_index[key]))
+        result.added.append(new_index[key])
 
     for key in sorted(old_keys - new_keys):
-        result.removed.append(RowChange(kind="removed", key=key, old=old_index[key]))
+        result.removed.append(old_index[key])
 
     for key in sorted(old_keys & new_keys):
         old_row = old_index[key]
         new_row = new_index[key]
-        field_diff = {
-            col: (old_row[col], new_row[col])
-            for col in old_row
-            if col in new_row and old_row[col] != new_row[col]
-        }
-        if field_diff:
-            result.modified.append(
-                RowChange(kind="modified", key=key, old=old_row, new=new_row, diff=field_diff)
-            )
+        if old_row != new_row:
+            result.changed.append(RowChange(key=key, before=old_row, after=new_row))
 
     return result
