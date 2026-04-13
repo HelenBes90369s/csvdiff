@@ -37,10 +37,22 @@ csvdiff old.csv new.csv
 csvdiff --key id old.csv new.csv
 ```
 
+**Use multiple key columns:**
+
+```bash
+csvdiff --key dept --key id old.csv new.csv
+```
+
 **Use a different output format:**
 
 ```bash
 csvdiff --key id --format json old.csv new.csv
+```
+
+**Ignore specific columns during comparison:**
+
+```bash
+csvdiff --key id --ignore updated_at old.csv new.csv
 ```
 
 ### Options
