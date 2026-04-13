@@ -1,93 +1,99 @@
 """Output formatters for diff results."""
 
 import json
-import csv
-import io
-from typing import Literal
-from csvdiff.differ import DiffResult, RowChange
+import sys
+from typing import TextIO
 
-OutputFormat = Literal["text", "json", "csv"]
+from csvdiff.differ import DiffResult
+from csvdiff.summary import DiffSummary, format_summary
 
 
-def format_diff(result: DiffResult, fmt: OutputFormat = "text") -> str:
-    """Format a DiffResult into a human-readable or machine-readable string."""
-    if fmt == "json":
-        return _format_json(result)
+def format_diff(
+    result: DiffResult,
+    summary: DiffSummary | None = None,
+    fmt: str = "text",
+    out: TextIO = sys.stdout,
+) -> None:
+    """Write formatted diff to *out*."""
+    if fmt == "text":
+        _format_text(result, summary, out)
+    elif fmt == "json":
+        _format_json(result, summary, out)
     elif fmt == "csv":
-        return _format_csv(result)
+        _format_csv(result, out)
     else:
-        return _format_text(result)
+        raise ValueError(f"Unknown format: {fmt!r}")
 
 
-def _format_text(result: DiffResult) -> str:
-    lines = []
+def _format_text(
+    result: DiffResult,
+    summary: DiffSummary | None,
+    out: TextIO,
+) -> None:
+    if not result.added and not result.removed and not result.changed:
+        out.write("No differences found.\n")
+        if summary:
+            out.write("\n" + format_summary(summary) + "\n")
+        return
 
-    for key in sorted(result.added):
-        row = result.added[key]
-        lines.append(f"+ {dict(zip(result.added, []))}")  # placeholder reset below
-        lines[-1] = f"+ {_row_str(key, row)}"
+    for row in result.added:
+        out.write(f"+ {_row_str(row)}\n")
+    for row in result.removed:
+        out.write(f"- {_row_str(row)}\n")
+    for change in result.changed:
+        key = _key_str(change.key)
+        out.write(f"~ [{key}] {change.field}: {change.old_value!r} -> {change.new_value!r}\n")
 
-    for key in sorted(result.removed):
-        row = result.removed[key]
-        lines.append(f"- {_row_str(key, row)}")
-
-    for key in sorted(result.changed):
-        change: RowChange = result.changed[key]
-        lines.append(f"~ {_key_str(key)}")
-        for col, (old_val, new_val) in change.field_changes.items():
-            lines.append(f"    {col}: {old_val!r} -> {new_val!r}")
-
-    if not lines:
-        lines.append("No differences found.")
-
-    return "\n".join(lines)
+    if summary:
+        out.write("\n" + format_summary(summary) + "\n")
 
 
-def _format_json(result: DiffResult) -> str:
-    data = {
-        "added": {_key_str(k): v for k, v in result.added.items()},
-        "removed": {_key_str(k): v for k, v in result.removed.items()},
-        "changed": {
-            _key_str(k): {
-                "field_changes": {
-                    col: {"old": old, "new": new}
-                    for col, (old, new) in v.field_changes.items()
-                }
+def _format_json(
+    result: DiffResult,
+    summary: DiffSummary | None,
+    out: TextIO,
+) -> None:
+    payload: dict = {
+        "added": result.added,
+        "removed": result.removed,
+        "changed": [
+            {
+                "key": list(c.key),
+                "field": c.field,
+                "old": c.old_value,
+                "new": c.new_value,
             }
-            for k, v in result.changed.items()
-        },
+            for c in result.changed
+        ],
     }
-    return json.dumps(data, indent=2)
+    if summary:
+        payload["summary"] = {
+            "rows_left": summary.total_rows_left,
+            "rows_right": summary.total_rows_right,
+            "added": summary.added,
+            "removed": summary.removed,
+            "changed": summary.changed,
+            "unchanged": summary.unchanged,
+            "change_rate": round(summary.change_rate, 4),
+        }
+    json.dump(payload, out, indent=2)
+    out.write("\n")
 
 
-def _format_csv(result: DiffResult) -> str:
-    output = io.StringIO()
-    writer = None
+def _format_csv(result: DiffResult, out: TextIO) -> None:
+    out.write("change_type,key,field,old_value,new_value\n")
+    for row in result.added:
+        out.write(f"added,{_row_str(row)},,, \n")
+    for row in result.removed:
+        out.write(f"removed,{_row_str(row)},,, \n")
+    for change in result.changed:
+        key = _key_str(change.key)
+        out.write(f"changed,{key},{change.field},{change.old_value},{change.new_value}\n")
 
-    rows = []
-    for key, row in result.added.items():
-        rows.append({"_diff": "added", **row})
-    for key, row in result.removed.items():
-        rows.append({"_diff": "removed", **row})
-    for key, change in result.changed.items():
-        entry = {"_diff": "changed"}
-        for col, (old_val, new_val) in change.field_changes.items():
-            entry[f"{col}_old"] = old_val
-            entry[f"{col}_new"] = new_val
-        rows.append(entry)
 
-    if rows:
-        fieldnames = list(rows[0].keys())
-        writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-
-    return output.getvalue()
+def _row_str(row: dict) -> str:
+    return " ".join(f"{k}={v}" for k, v in row.items())
 
 
 def _key_str(key: tuple) -> str:
     return "|".join(str(k) for k in key)
-
-
-def _row_str(key: tuple, row: dict) -> str:
-    return f"[{_key_str(key)}] {row}"
