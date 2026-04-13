@@ -84,3 +84,10 @@ def test_format_default_is_text():
     output_default = format_diff(result)
     output_text = format_diff(result, fmt="text")
     assert output_default == output_text
+
+
+def test_format_invalid_fmt_raises():
+    """format_diff should raise ValueError for unsupported format strings."""
+    result = make_result()
+    with pytest.raises(ValueError, match="unsupported format"):
+        format_diff(result, fmt="xml")
