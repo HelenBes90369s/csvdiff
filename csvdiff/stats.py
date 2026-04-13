@@ -29,6 +29,11 @@ class DiffStats:
         """Field names sorted by change frequency, descending."""
         return sorted(self.changed_fields, key=lambda f: self.changed_fields[f], reverse=True)
 
+    @property
+    def has_differences(self) -> bool:
+        """Return True if any rows were added, removed, or changed."""
+        return (self.total_added + self.total_removed + self.total_changed) > 0
+
 
 def compute_stats(result: DiffResult) -> DiffStats:
     """Return a :class:`DiffStats` computed from *result*."""
