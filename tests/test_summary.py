@@ -87,6 +87,15 @@ def test_format_summary_contains_counts():
     assert "40.0%" in text  # (1 removed + 1 changed) / 5
 
 
+def test_format_summary_no_changes():
+    """format_summary should report 0.0% change rate when there are no changes."""
+    result = make_result()
+    s = summarize(result, rows_left=10, rows_right=10)
+    text = format_summary(s)
+    assert "0.0%" in text
+    assert "10" in text  # unchanged count should appear
+
+
 def test_unchanged_never_negative():
     # More changed than rows_left (edge case guard)
     result = make_result(changed=[make_change(), make_change(), make_change()])
