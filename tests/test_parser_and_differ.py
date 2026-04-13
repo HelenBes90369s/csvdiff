@@ -101,5 +101,16 @@ def test_diff_modified():
 def test_diff_no_changes():
     rows = [{"id": "1", "name": "Alice"}]
     result = diff_csv(rows, rows, ["id"])
-    assert not result.has_changes
-    assert result.total == 0
+    assert not result.added
+    assert not result.removed
+    assert not result.modified
+
+
+def test_diff_multiple_modifications():
+    """Rows with more than one changed field should capture all field diffs."""
+    old = [{"id": "1", "name": "Alice", "score": "90", "grade": "A"}]
+    new = [{"id": "1", "name": "Alicia", "score": "95", "grade": "A"}]
+    result = diff_csv(old, new, ["id"])
+    assert len(result.modified) == 1
+    change = result.modified[0]
+    assert change.diff == {"name": ("Alice", "Alicia"), "score": ("90", "95")}
