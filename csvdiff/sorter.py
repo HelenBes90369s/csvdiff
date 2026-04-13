@@ -11,6 +11,11 @@ class SortError(Exception):
     """Raised when an invalid sort field is specified."""
 
 
+def _normalise_key(k):
+    """Normalise a key to a tuple for stable, consistent comparisons."""
+    return k if isinstance(k, tuple) else (k,)
+
+
 def sort_diff(
     result: DiffResult,
     by: str = "key",
@@ -41,8 +46,7 @@ def sort_diff(
     def _key(change: RowChange):
         if by == "key":
             # Keys may be tuples or scalars; normalise to tuple for stable sort.
-            k = change.key
-            return k if isinstance(k, tuple) else (k,)
+            return _normalise_key(change.key)
         # change_type is a string like 'added', 'removed', 'changed'
         return (change.change_type,)
 
@@ -57,7 +61,4 @@ def sort_diff(
 
 def sort_keys(keys: List, reverse: bool = False) -> List:
     """Sort a flat list of keys, handling both scalar and tuple keys."""
-    def _normalise(k):
-        return k if isinstance(k, tuple) else (k,)
-
-    return sorted(keys, key=_normalise, reverse=reverse)
+    return sorted(keys, key=_normalise_key, reverse=reverse)
