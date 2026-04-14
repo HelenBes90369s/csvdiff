@@ -9,6 +9,7 @@ from csvdiff.formatter import format_diff
 def make_result(
     added=None, removed=None, changed=None
 ) -> DiffResult:
+    """Create a DiffResult with optional added, removed, and changed entries."""
     return DiffResult(
         added=added or {},
         removed=removed or {},
@@ -63,6 +64,16 @@ def test_format_json_structure():
     assert "5" in data["changed"]
     assert data["changed"]["5"]["field_changes"]["score"]["old"] == "10"
     assert data["changed"]["5"]["field_changes"]["score"]["new"] == "20"
+
+
+def test_format_json_no_differences():
+    """JSON output for an empty diff should still contain the expected keys."""
+    result = make_result()
+    output = format_diff(result, fmt="json")
+    data = json.loads(output)
+    assert data["added"] == {}
+    assert data["removed"] == {}
+    assert data["changed"] == {}
 
 
 def test_format_csv_added_row():
