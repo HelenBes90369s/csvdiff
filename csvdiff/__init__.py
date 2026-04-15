@@ -1,51 +1,63 @@
-"""csvdiff – public API."""
+"""csvdiff — public API re-exports."""
 
-from csvdiff.parser import read_csv, index_rows, CSVParseError
+from csvdiff.parser import CSVParseError, read_csv, index_rows
 from csvdiff.differ import (
-    DiffResult,
-    RowChange,
+    CSVDiffError,
     FieldChange,
-    diff_results,
-    compute_diff,
+    RowChange,
+    DiffResult,
+    changed_fields,
 )
 from csvdiff.formatter import format_diff
-from csvdiff.summary import summarize, DiffSummary
-from csvdiff.filter import filter_diff_by_columns, exclude_columns
-from csvdiff.sorter import sort_diff, sort_keys
-from csvdiff.merger import merge_diff
-from csvdiff.stats import compute_stats, DiffStats
-from csvdiff.exporter import export_diff
-from csvdiff.validator import validate_diff, ValidationResult
-from csvdiff.reporter import build_report, DiffReport
-from csvdiff.highlighter import highlight_diff
-from csvdiff.truncator import truncate_diff
-from csvdiff.sampler import sample_diff
-from csvdiff.annotator import annotate_diff
-from csvdiff.scorer import score_rows, rank_candidates
-from csvdiff.matcher import match_orphans, MatchedPair
-from csvdiff.normalizer import normalize_row
-from csvdiff.grouper import group_diff
-from csvdiff.limiter import limit_diff
+from csvdiff.summary import DiffSummary, summarize, format_summary
+from csvdiff.filter import FilterError, filter_columns, filter_diff_by_columns, exclude_columns
+from csvdiff.pager import DiffPage, paginate_diff, page_to_diff_result
+from csvdiff.sorter import SortError, sort_diff, sort_keys
+from csvdiff.merger import MergeError, merge_diff
+from csvdiff.stats import DiffStats, compute_stats
+from csvdiff.exporter import ExportError, export_diff
+from csvdiff.validator import ValidationError, ValidationResult, validate_diff, assert_valid
+from csvdiff.reporter import DiffReport, build_report, format_report
+from csvdiff.highlighter import HighlightError, HighlightedField, highlight_diff
+from csvdiff.truncator import TruncateError, TruncateOptions, TruncateResult
+from csvdiff.sampler import SampleError, SampleOptions, sample_diff
+from csvdiff.annotator import AnnotationError, AnnotatedRow
+from csvdiff.scorer import ScorerError, SimilarityScore, score_rows, rank_candidates
+from csvdiff.normalizer import NormalizeError, NormalizeOptions, normalize_row
+from csvdiff.grouper import GroupError, DiffGroup
+from csvdiff.limiter import LimitError, LimitOptions, LimitResult
+from csvdiff.matcher import MatchError, MatchedPair, match_orphans
+from csvdiff.deduplicator import DeduplicateError, DeduplicateOptions, deduplicate_diff
+from csvdiff.classifier import (
+    ClassifyError,
+    ClassifyOptions,
+    ClassifiedChange,
+    classify_diff,
+    severity_counts,
+)
 
 __all__ = [
-    "read_csv", "index_rows", "CSVParseError",
-    "DiffResult", "RowChange", "FieldChange", "diff_results", "compute_diff",
+    "CSVParseError", "read_csv", "index_rows",
+    "CSVDiffError", "FieldChange", "RowChange", "DiffResult", "changed_fields",
     "format_diff",
-    "summarize", "DiffSummary",
-    "filter_diff_by_columns", "exclude_columns",
-    "sort_diff", "sort_keys",
-    "merge_diff",
-    "compute_stats", "DiffStats",
-    "export_diff",
-    "validate_diff", "ValidationResult",
-    "build_report", "DiffReport",
-    "highlight_diff",
-    "truncate_diff",
-    "sample_diff",
-    "annotate_diff",
-    "score_rows", "rank_candidates",
-    "match_orphans", "MatchedPair",
-    "normalize_row",
-    "group_diff",
-    "limit_diff",
+    "DiffSummary", "summarize", "format_summary",
+    "FilterError", "filter_columns", "filter_diff_by_columns", "exclude_columns",
+    "DiffPage", "paginate_diff", "page_to_diff_result",
+    "SortError", "sort_diff", "sort_keys",
+    "MergeError", "merge_diff",
+    "DiffStats", "compute_stats",
+    "ExportError", "export_diff",
+    "ValidationError", "ValidationResult", "validate_diff", "assert_valid",
+    "DiffReport", "build_report", "format_report",
+    "HighlightError", "HighlightedField", "highlight_diff",
+    "TruncateError", "TruncateOptions", "TruncateResult",
+    "SampleError", "SampleOptions", "sample_diff",
+    "AnnotationError", "AnnotatedRow",
+    "ScorerError", "SimilarityScore", "score_rows", "rank_candidates",
+    "NormalizeError", "NormalizeOptions", "normalize_row",
+    "GroupError", "DiffGroup",
+    "LimitError", "LimitOptions", "LimitResult",
+    "MatchError", "MatchedPair", "match_orphans",
+    "DeduplicateError", "DeduplicateOptions", "deduplicate_diff",
+    "ClassifyError", "ClassifyOptions", "ClassifiedChange", "classify_diff", "severity_counts",
 ]
