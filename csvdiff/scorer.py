@@ -1,87 +1,69 @@
-"""Similarity scoring for CSV diff rows.
-
-Provides a numeric similarity score (0.0–1.0) between two CSV rows,
-useful for fuzzy matching and ranking potential row moves.
-"""
+"""Row similarity scoring used by the matcher."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List, Sequence, Tuple
 
 
 class ScorerError(Exception):
-    """Raised when scoring cannot be performed."""
+    """Raised when scorer inputs are invalid."""
 
 
 @dataclass(frozen=True)
 class SimilarityScore:
-    """Result of comparing two rows."""
+    """Similarity between two rows."""
 
-    score: float          # 0.0 (no match) to 1.0 (identical)
-    matched_fields: int
-    total_fields: int
-    key: Optional[str] = None  # optional label for the row pair
+    score: float   # 0.0 – 1.0
+    matched: int   # number of matching field values
+    total: int     # total fields compared
 
     def __post_init__(self) -> None:
-        if not (0.0 <= self.score <= 1.0):
-            raise ScorerError(f"score must be in [0, 1], got {self.score}")
-        if self.total_fields < 0:
-            raise ScorerError("total_fields must be >= 0")
+        if not 0.0 <= self.score <= 1.0:
+            raise ScorerError(
+                f"score must be between 0.0 and 1.0, got {self.score!r}"
+            )
+        if self.total < 0:
+            raise ScorerError(f"total must be >= 0, got {self.total!r}")
 
 
 def score_rows(
     row_a: Dict[str, str],
     row_b: Dict[str, str],
-    fields: Optional[List[str]] = None,
 ) -> SimilarityScore:
-    """Return a SimilarityScore comparing *row_a* to *row_b*.
-
-    Args:
-        row_a: First row as a field→value mapping.
-        row_b: Second row as a field→value mapping.
-        fields: Explicit list of fields to compare.  When *None* the union
-                of both rows' keys is used.
-
-    Returns:
-        A :class:`SimilarityScore` instance.
-    """
-    if fields is None:
-        fields = sorted(set(row_a) | set(row_b))
-
-    if not fields:
-        return SimilarityScore(score=1.0, matched_fields=0, total_fields=0)
-
+    """Compute a simple field-equality similarity score between two rows."""
+    all_keys = set(row_a) | set(row_b)
+    if not all_keys:
+        return SimilarityScore(score=1.0, matched=0, total=0)
     matched = sum(
-        1 for f in fields if row_a.get(f, "") == row_b.get(f, "")
+        1
+        for k in all_keys
+        if row_a.get(k) == row_b.get(k)
     )
+    total = len(all_keys)
     return SimilarityScore(
-        score=matched / len(fields),
-        matched_fields=matched,
-        total_fields=len(fields),
+        score=round(matched / total, 6),
+        matched=matched,
+        total=total,
     )
 
 
 def rank_candidates(
-    target: Dict[str, str],
-    candidates: List[Dict[str, str]],
-    fields: Optional[List[str]] = None,
-    threshold: float = 0.0,
-) -> List[SimilarityScore]:
-    """Score *target* against each candidate and return sorted results.
+    row: Dict[str, str],
+    candidates: Sequence[Dict[str, str]],
+    *,
+    limit: int = 5,
+) -> List[Tuple[SimilarityScore, int]]:
+    """Return the top *limit* candidates ranked by similarity to *row*.
 
-    Results are sorted descending by score.  Candidates whose score is
-    strictly below *threshold* are excluded.
+    Returns a list of ``(SimilarityScore, original_index)`` tuples sorted
+    by descending score.
     """
-    if not (0.0 <= threshold <= 1.0):
-        raise ScorerError(f"threshold must be in [0, 1], got {threshold}")
-
-    scores = [
-        score_rows(target, candidate, fields)
-        for candidate in candidates
+    if limit < 1:
+        raise ScorerError(f"limit must be >= 1, got {limit!r}")
+    scored = [
+        (score_rows(row, candidate), idx)
+        for idx, candidate in enumerate(candidates)
     ]
-    return sorted(
-        (s for s in scores if s.score >= threshold),
-        key=lambda s: s.score,
-        reverse=True,
-    )
+    scored.sort(key=lambda t: t[0].score, reverse=True)
+    return scored[:limit]
