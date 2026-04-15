@@ -1,4 +1,5 @@
-"""csvdiff — public API."""
+"""csvdiff – public API."""
+
 from csvdiff.parser import CSVParseError, read_csv, index_rows
 from csvdiff.differ import (
     CSVDiffError,
@@ -34,6 +35,8 @@ from csvdiff.flattener import FlattenError, FlatRow, flatten_diff
 from csvdiff.splitter import SplitError, SplitOptions
 from csvdiff.partitioner import PartitionError, PartitionOptions, PartitionResult
 from csvdiff.aggregator import AggregateError, FieldAggregate, aggregate_diff
+from csvdiff.transformer import TransformError, TransformOptions, transform_diff
+from csvdiff.redactor import RedactError, RedactOptions, redact_diff
 
 __all__ = [
     # parser
@@ -94,4 +97,8 @@ __all__ = [
     "PartitionError", "PartitionOptions", "PartitionResult",
     # aggregator
     "AggregateError", "FieldAggregate", "aggregate_diff",
+    # transformer
+    "TransformError", "TransformOptions", "transform_diff",
+    # redactor
+    "RedactError", "RedactOptions", "redact_diff",
 ]
