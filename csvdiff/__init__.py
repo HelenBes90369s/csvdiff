@@ -1,5 +1,4 @@
-"""csvdiff – public API surface."""
-
+"""csvdiff — public API."""
 from csvdiff.parser import CSVParseError, read_csv, index_rows
 from csvdiff.differ import (
     CSVDiffError,
@@ -10,12 +9,13 @@ from csvdiff.differ import (
 )
 from csvdiff.formatter import format_diff
 from csvdiff.filter import FilterError, filter_columns, filter_diff_by_columns, exclude_columns
+from csvdiff.summary import DiffSummary, summarize, format_summary
 from csvdiff.pager import DiffPage, paginate_diff, page_to_diff_result
 from csvdiff.sorter import SortError, sort_diff, sort_keys
 from csvdiff.merger import MergeError, merge_diff
 from csvdiff.stats import DiffStats, compute_stats
 from csvdiff.exporter import ExportError, export_diff
-from csvdiff.validator import ValidationError, ValidationRule, validate_diff, assert_valid
+from csvdiff.validator import ValidationError, ValidationRule, ValidationResult, validate_diff, assert_valid
 from csvdiff.reporter import DiffReport, build_report, format_report
 from csvdiff.highlighter import HighlightError, HighlightedField, highlight_diff
 from csvdiff.truncator import TruncateError, TruncateOptions, TruncateResult
@@ -32,7 +32,8 @@ from csvdiff.pivotter import PivotError, FieldPivot
 from csvdiff.ranker import RankError, RankOptions
 from csvdiff.flattener import FlattenError, FlatRow, flatten_diff
 from csvdiff.splitter import SplitError, SplitOptions
-from csvdiff.partitioner import PartitionError, PartitionOptions, PartitionResult, partition_diff
+from csvdiff.partitioner import PartitionError, PartitionOptions, PartitionResult
+from csvdiff.aggregator import AggregateError, FieldAggregate, aggregate_diff
 
 __all__ = [
     # parser
@@ -43,6 +44,8 @@ __all__ = [
     "format_diff",
     # filter
     "FilterError", "filter_columns", "filter_diff_by_columns", "exclude_columns",
+    # summary
+    "DiffSummary", "summarize", "format_summary",
     # pager
     "DiffPage", "paginate_diff", "page_to_diff_result",
     # sorter
@@ -54,7 +57,7 @@ __all__ = [
     # exporter
     "ExportError", "export_diff",
     # validator
-    "ValidationError", "ValidationRule", "validate_diff", "assert_valid",
+    "ValidationError", "ValidationRule", "ValidationResult", "validate_diff", "assert_valid",
     # reporter
     "DiffReport", "build_report", "format_report",
     # highlighter
@@ -88,5 +91,7 @@ __all__ = [
     # splitter
     "SplitError", "SplitOptions",
     # partitioner
-    "PartitionError", "PartitionOptions", "PartitionResult", "partition_diff",
+    "PartitionError", "PartitionOptions", "PartitionResult",
+    # aggregator
+    "AggregateError", "FieldAggregate", "aggregate_diff",
 ]
