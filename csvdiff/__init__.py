@@ -1,4 +1,4 @@
-"""csvdiff – public API."""
+"""csvdiff – public API surface."""
 
 from csvdiff.parser import CSVParseError, read_csv, index_rows
 from csvdiff.differ import (
@@ -9,8 +9,8 @@ from csvdiff.differ import (
     changed_fields,
 )
 from csvdiff.formatter import format_diff
-from csvdiff.filter import FilterError, filter_columns, filter_diff_by_columns, exclude_columns
 from csvdiff.summary import DiffSummary, summarize, format_summary
+from csvdiff.filter import FilterError, filter_columns, filter_diff_by_columns, exclude_columns
 from csvdiff.pager import DiffPage, paginate_diff, page_to_diff_result
 from csvdiff.sorter import SortError, sort_diff, sort_keys
 from csvdiff.merger import MergeError, merge_diff
@@ -35,8 +35,9 @@ from csvdiff.flattener import FlattenError, FlatRow, flatten_diff
 from csvdiff.splitter import SplitError, SplitOptions
 from csvdiff.partitioner import PartitionError, PartitionOptions, PartitionResult
 from csvdiff.aggregator import AggregateError, FieldAggregate, aggregate_diff
-from csvdiff.transformer import TransformError, TransformOptions, transform_diff
-from csvdiff.redactor import RedactError, RedactOptions, redact_diff
+from csvdiff.transformer import TransformError, TransformOptions
+from csvdiff.redactor import RedactError, RedactOptions
+from csvdiff.comparer import CompareError, CompareResult, FieldOverlap, compare_results
 
 __all__ = [
     # parser
@@ -45,10 +46,10 @@ __all__ = [
     "CSVDiffError", "FieldChange", "RowChange", "DiffResult", "changed_fields",
     # formatter
     "format_diff",
-    # filter
-    "FilterError", "filter_columns", "filter_diff_by_columns", "exclude_columns",
     # summary
     "DiffSummary", "summarize", "format_summary",
+    # filter
+    "FilterError", "filter_columns", "filter_diff_by_columns", "exclude_columns",
     # pager
     "DiffPage", "paginate_diff", "page_to_diff_result",
     # sorter
@@ -98,7 +99,9 @@ __all__ = [
     # aggregator
     "AggregateError", "FieldAggregate", "aggregate_diff",
     # transformer
-    "TransformError", "TransformOptions", "transform_diff",
+    "TransformError", "TransformOptions",
     # redactor
-    "RedactError", "RedactOptions", "redact_diff",
+    "RedactError", "RedactOptions",
+    # comparer
+    "CompareError", "CompareResult", "FieldOverlap", "compare_results",
 ]
