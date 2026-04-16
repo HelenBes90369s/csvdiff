@@ -35,6 +35,17 @@ class FieldPivot:
     def new_values(self) -> List[str]:
         return [fc.new_value for _, fc in self.changes]
 
+    @property
+    def unique_row_keys(self) -> List[str]:
+        """Return deduplicated row keys that have a change for this field."""
+        seen = set()
+        result = []
+        for key, _ in self.changes:
+            if key not in seen:
+                seen.add(key)
+                result.append(key)
+        return result
+
 
 def pivot_diff(result: DiffResult) -> Dict[str, FieldPivot]:
     """Return a mapping of field_name -> FieldPivot for all changed rows.
