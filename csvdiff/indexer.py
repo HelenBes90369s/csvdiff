@@ -46,6 +46,14 @@ class DiffIndex:
         """Total number of indexed changes."""
         return len(self.by_position)
 
+    def keys(self) -> List[Tuple]:
+        """Return all unique keys present in the index."""
+        return list(self.by_key.keys())
+
+    def fields(self) -> List[str]:
+        """Return all field names that appear in at least one change."""
+        return list(self.by_field.keys())
+
 
 def build_index(result: Optional[DiffResult]) -> DiffIndex:
     """Build a :class:`DiffIndex` from *result*.
