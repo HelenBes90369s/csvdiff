@@ -40,6 +40,9 @@ def split_diff(result: DiffResult, options: SplitOptions) -> Dict[str, DiffResul
     Returns:
         A dict mapping each distinct column value to a DiffResult that
         contains only the changes belonging to that bucket.
+
+    Raises:
+        SplitError: If *result* is ``None``.
     """
     if result is None:
         raise SplitError("result must not be None")
@@ -70,3 +73,23 @@ def bucket_keys(result: DiffResult, options: SplitOptions) -> List[str]:
         val = _row_value(change, options.column)
         seen.add(val if val is not None else "__missing__")
     return sorted(seen)
+
+
+def split_diff_subset(
+    result: DiffResult, options: SplitOptions, keys: List[str]
+) -> Dict[str, DiffResult]:
+    """Like :func:`split_diff`, but only return buckets whose key is in *keys*.
+
+    This is useful when you only care about a known subset of values and want
+    to avoid allocating buckets for every distinct value in a large diff.
+
+    Raises:
+        SplitError: If *result* is ``None`` or *keys* is empty.
+    """
+    if result is None:
+        raise SplitError("result must not be None")
+    if not keys:
+        raise SplitError("keys must not be empty")
+    wanted = set(keys)
+    full = split_diff(result, options)
+    return {k: v for k, v in full.items() if k in wanted}
