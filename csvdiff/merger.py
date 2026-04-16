@@ -23,6 +23,13 @@ def merge_diff(
     - Added rows in *diff* are appended.
     - Removed rows are dropped (a row missing from base raises :class:`MergeError`).
     - Changed rows have their fields updated in-place.
+
+    Raises
+    ------
+    MergeError
+        If *key_columns* is empty, a key column is missing from a row, duplicate
+        keys exist in *base_rows*, or the diff references keys inconsistent with
+        the base (e.g. removing a non-existent row or adding a duplicate).
     """
     if not key_columns:
         raise MergeError("At least one key column is required for merging.")
@@ -55,6 +62,11 @@ def merge_diff(
         if key not in index:
             raise MergeError(f"Cannot update row with key {key!r}: not found in base.")
         for field_change in change.field_changes:
+            if field_change.column not in index[key]:
+                raise MergeError(
+                    f"Cannot update field {field_change.column!r} for key {key!r}: "
+                    "column not present in base row."
+                )
             index[key][field_change.column] = field_change.new_value
 
     # Apply additions.
