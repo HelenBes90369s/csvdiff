@@ -1,166 +1,80 @@
-"""csvdiff – public API.
-
-This file re-exports the most commonly used symbols so users can write::
-
-    from csvdiff import read_csv, diff_csv, format_diff
-"""
-from .parser import CSVParseError, read_csv, index_rows
-from .differ import (
+"""csvdiff public API — updated to expose resolver."""
+from csvdiff.parser import CSVParseError, read_csv, index_rows
+from csvdiff.differ import (
     CSVDiffError,
     FieldChange,
     RowChange,
     DiffResult,
     changed_fields,
 )
-from .formatter import format_diff
-from .filter import FilterError, filter_columns, filter_diff_by_columns, exclude_columns
-from .summary import DiffSummary, summarize, format_summary
-from .sorter import SortError, sort_diff, sort_keys
-from .merger import MergeError, merge_diff
-from .stats import DiffStats, compute_stats
-from .exporter import ExportError, export_diff
-from .validator import ValidationError, ValidationRule, validate_diff, assert_valid
-from .reporter import DiffReport, build_report, format_report
-from .highlighter import HighlightError, HighlightedField, highlight_diff
-from .truncator import TruncateError, TruncateOptions, TruncateResult
-from .sampler import SampleError, SampleOptions, sample_diff
-from .annotator import AnnotationError, Annotation, AnnotatedRow
-from .scorer import ScorerError, SimilarityScore, score_rows, rank_candidates
-from .normalizer import NormalizeError, NormalizeOptions, normalize_row
-from .grouper import GroupError, DiffGroup
-from .limiter import LimitError, LimitOptions, LimitResult
-from .matcher import MatchError, MatchedPair, match_orphans
-from .deduplicator import DeduplicateError, DeduplicateOptions, deduplicate_diff
-from .classifier import ClassifyError, ClassifyOptions, ClassifiedChange
-from .pivotter import PivotError, FieldPivot
-from .ranker import RankError, RankOptions
-from .flattener import FlattenError, FlatRow, flatten_diff
-from .splitter import SplitError, SplitOptions
-from .partitioner import PartitionError, PartitionOptions, PartitionResult
-from .aggregator import AggregateError, FieldAggregate, aggregate import TransformError, TransformOptions
-from .redactor import RedactError, RedactOptions
-from .comparer import CompareError, CompareResult
-from .indexer import IndexError as DiffIndexError, DiffIndex, build_index
+from csvdiff.formatter import format_diff
+from csvdiff.filter import FilterError, filter_columns, filter_diff_by_columns, exclude_columns
+from csvdiff.summary import DiffSummary, summarize, format_summary
+from csvdiff.pager import DiffPage, paginate_diff, page_to_diff_result
+from csvdiff.sorter import SortError, sort_diff, sort_keys
+from csvdiff.merger import MergeError, merge_diff
+from csvdiff.stats import DiffStats, compute_stats
+from csvdiff.exporter import ExportError, export_diff
+from csvdiff.validator import ValidationError, ValidationRule, ValidationResult, validate_diff, assert_valid
+from csvdiff.reporter import DiffReport, build_report, format_report
+from csvdiff.highlighter import HighlightError, HighlightedField, render, highlight_diff
+from csvdiff.truncator import TruncateError, TruncateOptions, TruncateResult
+from csvdiff.sampler import SampleError, SampleOptions, sample_diff
+from csvdiff.annotator import AnnotationError, Annotation, AnnotatedRow
+from csvdiff.scorer import ScorerError, SimilarityScore, score_rows, rank_candidates
+from csvdiff.normalizer import NormalizeError, NormalizeOptions, normalize_row
+from csvdiff.grouper import GroupError, DiffGroup
+from csvdiff.limiter import LimitError, LimitOptions, LimitResult
+from csvdiff.matcher import MatchError, MatchedPair, match_orphans
+from csvdiff.deduplicator import DeduplicateError, DeduplicateOptions, deduplicate_diff
+from csvdiff.classifier import ClassifyError, ClassifyOptions, ClassifiedChange
+from csvdiff.pivotter import PivotError, FieldPivot
+from csvdiff.ranker import RankError, RankOptions
+from csvdiff.flattener import FlattenError, FlatRow, flatten_diff
+from csvdiff.splitter import SplitError, SplitOptions
+from csvdiff.partitioner import PartitionError, PartitionOptions, PartitionResult
+from csvdiff.aggregator import AggregateError, FieldAggregate, aggregate_diff
+from csvdiff.transformer import TransformError, TransformOptions
+from csvdiff.redactor import RedactError, RedactOptions
+from csvdiff.comparer import CompareError, CompareResult
+from csvdiff.indexer import DiffIndex
+from csvdiff.differ_patch import PatchError, Patch
+from csvdiff.resolver import ResolveError, ResolveOptions, resolve_diff
 
 __all__ = [
-    # parser
-    "CSVParseError",
-    "read_csv",
-    "index_rows",
-    # differ
-    "CSVDiffError",
-    "FieldChange",
-    "RowChange",
-    "DiffResult",
-    "changed_fields",
-    # formatter
+    "CSVParseError", "read_csv", "index_rows",
+    "CSVDiffError", "FieldChange", "RowChange", "DiffResult", "changed_fields",
     "format_diff",
-    # filter
-    "FilterError",
-    "filter_columns",
-    "filter_diff_by_columns",
-    "exclude_columns",
-    # summary
-    "DiffSummary",
-    "summarize",
-    "format_summary",
-    # sorter
-    "SortError",
-    "sort_diff",
-    "sort_keys",
-    # merger
-    "MergeError",
-    "merge_diff",
-    # stats
-    "DiffStats",
-    "compute_stats",
-    # exporter
-    "ExportError",
-    "export_diff",
-    # validator
-    "ValidationError",
-    "ValidationRule",
-    "validate_diff",
-    "assert_valid",
-    # reporter
-    "DiffReport",
-    "build_report",
-    "format_report",
-    # highlighter
-    "HighlightError",
-    "HighlightedField",
-    "highlight_diff",
-    # truncator
-    "TruncateError",
-    "TruncateOptions",
-    "TruncateResult",
-    # sampler
-    "SampleError",
-    "SampleOptions",
-    "sample_diff",
-    # annotator
-    "AnnotationError",
-    "Annotation",
-    "AnnotatedRow",
-    # scorer
-    "ScorerError",
-    "SimilarityScore",
-    "score_rows",
-    "rank_candidates",
-    # normalizer
-    "NormalizeError",
-    "NormalizeOptions",
-    "normalize_row",
-    # grouper
-    "GroupError",
-    "DiffGroup",
-    # limiter
-    "LimitError",
-    "LimitOptions",
-    "LimitResult",
-    # matcher
-    "MatchError",
-    "MatchedPair",
-    "match_orphans",
-    # deduplicator
-    "DeduplicateError",
-    "DeduplicateOptions",
-    "deduplicate_diff",
-    # classifier
-    "ClassifyError",
-    "ClassifyOptions",
-    "ClassifiedChange",
-    # pivotter
-    "PivotError",
-    "FieldPivot",
-    # ranker
-    "RankError",
-    "RankOptions",
-    # flattener
-    "FlattenError",
-    "FlatRow",
-    "flatten_diff",
-    # splitter
-    "SplitError",
-    "SplitOptions",
-    # partitioner
-    "PartitionError",
-    "PartitionOptions",
-    "PartitionResult",
-    # aggregator
-    "AggregateError",
-    "FieldAggregate",
-    "aggregate_diff",
-    # transformer
-    "TransformError",
-    "TransformOptions",
-    # redactor
-    "RedactError",
-    "Red comparer
-    "CompareError",
-    "CompareResult",
-    # indexer
-    "DiffIndexError",
+    "FilterError", "filter_columns", "filter_diff_by_columns", "exclude_columns",
+    "DiffSummary", "summarize", "format_summary",
+    "DiffPage", "paginate_diff", "page_to_diff_result",
+    "SortError", "sort_diff", "sort_keys",
+    "MergeError", "merge_diff",
+    "DiffStats", "compute_stats",
+    "ExportError", "export_diff",
+    "ValidationError", "ValidationRule", "ValidationResult", "validate_diff", "assert_valid",
+    "DiffReport", "build_report", "format_report",
+    "HighlightError", "HighlightedField", "render", "highlight_diff",
+    "TruncateError", "TruncateOptions", "TruncateResult",
+    "SampleError", "SampleOptions", "sample_diff",
+    "AnnotationError", "Annotation", "AnnotatedRow",
+    "ScorerError", "SimilarityScore", "score_rows", "rank_candidates",
+    "NormalizeError", "NormalizeOptions", "normalize_row",
+    "GroupError", "DiffGroup",
+    "LimitError", "LimitOptions", "LimitResult",
+    "MatchError", "MatchedPair", "match_orphans",
+    "DeduplicateError", "DeduplicateOptions", "deduplicate_diff",
+    "ClassifyError", "ClassifyOptions", "ClassifiedChange",
+    "PivotError", "FieldPivot",
+    "RankError", "RankOptions",
+    "FlattenError", "FlatRow", "flatten_diff",
+    "SplitError", "SplitOptions",
+    "PartitionError", "PartitionOptions", "PartitionResult",
+    "AggregateError", "FieldAggregate", "aggregate_diff",
+    "TransformError", "TransformOptions",
+    "RedactError", "RedactOptions",
+    "CompareError", "CompareResult",
     "DiffIndex",
-    "build_index",
+    "PatchError", "Patch",
+    "ResolveError", "ResolveOptions", "resolve_diff",
 ]
