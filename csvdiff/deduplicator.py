@@ -39,6 +39,33 @@ def _row_signature(change: RowChange) -> Tuple:
     return (change.key, change.kind, field_sig)
 
 
+def count_duplicates(result: DiffResult) -> int:
+    """Return the number of duplicate RowChange entries in *result*.
+
+    A duplicate is any RowChange whose signature has already appeared in
+    an earlier position within ``result.changes``.
+
+    Parameters
+    ----------
+    result:
+        The diff result to inspect.
+
+    Returns
+    -------
+    int
+        The count of duplicate (non-unique) entries.
+    """
+    seen: set = set()
+    duplicates = 0
+    for change in result.changes:
+        sig = _row_signature(change)
+        if sig in seen:
+            duplicates += 1
+        else:
+            seen.add(sig)
+    return duplicates
+
+
 def deduplicate_diff(
     result: DiffResult,
     options: DeduplicateOptions | None = None,
