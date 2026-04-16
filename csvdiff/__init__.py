@@ -1,5 +1,5 @@
-"""csvdiff — public API."""
-from csvdiff.parser import CSVParseError, read_csv, index_rows
+"""csvdiff – public re-exports."""
+
 from csvdiff.differ import (
     CSVDiffError,
     FieldChange,
@@ -7,6 +7,7 @@ from csvdiff.differ import (
     DiffResult,
     changed_fields,
 )
+from csvdiff.parser import CSVParseError, read_csv, index_rows
 from csvdiff.formatter import format_diff
 from csvdiff.filter import FilterError, filter_columns, filter_diff_by_columns, exclude_columns
 from csvdiff.summary import DiffSummary, summarize, format_summary
@@ -22,7 +23,7 @@ from csvdiff.truncator import TruncateError, TruncateOptions, TruncateResult
 from csvdiff.sampler import SampleError, SampleOptions, sample_diff
 from csvdiff.annotator import AnnotationError, Annotation, AnnotatedRow
 from csvdiff.scorer import ScorerError, SimilarityScore, score_rows, rank_candidates
-from csvdiff.normalizer import NormalizeError, NormalizeOptions
+from csvdiff.normalizer import NormalizeError, NormalizeOptions, normalize_row
 from csvdiff.grouper import GroupError, DiffGroup
 from csvdiff.limiter import LimitError, LimitOptions, LimitResult
 from csvdiff.matcher import MatchError, MatchedPair, match_orphans
@@ -42,11 +43,14 @@ from csvdiff.differ_patch import PatchError, Patch, build_patch
 from csvdiff.resolver import ResolveError, ResolveOptions, resolve_diff
 from csvdiff.renamer import RenameError, RenameOptions
 from csvdiff.caster import CastError, CastOptions
-from csvdiff.masker import MaskError, MaskOptions, mask_diff
+from csvdiff.masker import MaskError, MaskOptions
+from csvdiff.encoder import EncodeError, EncodedDiff, encode_diff
+from csvdiff.compressor import CompressError, CompressedDiff, compress_diff, decompress_diff
+from csvdiff.freezer import FreezeError, FrozenDiff, freeze_diff, thaw_diff, checksums_match
 
 __all__ = [
-    "CSVParseError", "read_csv", "index_rows",
     "CSVDiffError", "FieldChange", "RowChange", "DiffResult", "changed_fields",
+    "CSVParseError", "read_csv", "index_rows",
     "format_diff",
     "FilterError", "filter_columns", "filter_diff_by_columns", "exclude_columns",
     "DiffSummary", "summarize", "format_summary",
@@ -62,7 +66,7 @@ __all__ = [
     "SampleError", "SampleOptions", "sample_diff",
     "AnnotationError", "Annotation", "AnnotatedRow",
     "ScorerError", "SimilarityScore", "score_rows", "rank_candidates",
-    "NormalizeError", "NormalizeOptions",
+    "NormalizeError", "NormalizeOptions", "normalize_row",
     "GroupError", "DiffGroup",
     "LimitError", "LimitOptions", "LimitResult",
     "MatchError", "MatchedPair", "match_orphans",
@@ -82,5 +86,8 @@ __all__ = [
     "ResolveError", "ResolveOptions", "resolve_diff",
     "RenameError", "RenameOptions",
     "CastError", "CastOptions",
-    "MaskError", "MaskOptions", "mask_diff",
+    "MaskError", "MaskOptions",
+    "EncodeError", "EncodedDiff", "encode_diff",
+    "CompressError", "CompressedDiff", "compress_diff", "decompress_diff",
+    "FreezeError", "FrozenDiff", "freeze_diff", "thaw_diff", "checksums_match",
 ]
