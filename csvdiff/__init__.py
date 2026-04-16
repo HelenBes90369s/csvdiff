@@ -1,4 +1,4 @@
-"""csvdiff – public API."""
+"""csvdiff — public API."""
 from csvdiff.parser import CSVParseError, read_csv, index_rows
 from csvdiff.differ import (
     CSVDiffError,
@@ -22,7 +22,7 @@ from csvdiff.truncator import TruncateError, TruncateOptions, TruncateResult
 from csvdiff.sampler import SampleError, SampleOptions, sample_diff
 from csvdiff.annotator import AnnotationError, Annotation, AnnotatedRow
 from csvdiff.scorer import ScorerError, SimilarityScore, score_rows, rank_candidates
-from csvdiff.normalizer import NormalizeError, NormalizeOptions, normalize_row
+from csvdiff.normalizer import NormalizeError, NormalizeOptions
 from csvdiff.grouper import GroupError, DiffGroup
 from csvdiff.limiter import LimitError, LimitOptions, LimitResult
 from csvdiff.matcher import MatchError, MatchedPair, match_orphans
@@ -41,7 +41,8 @@ from csvdiff.indexer import DiffIndex
 from csvdiff.differ_patch import PatchError, Patch, build_patch
 from csvdiff.resolver import ResolveError, ResolveOptions, resolve_diff
 from csvdiff.renamer import RenameError, RenameOptions
-from csvdiff.caster import CastError, CastOptions, cast_diff
+from csvdiff.caster import CastError, CastOptions
+from csvdiff.masker import MaskError, MaskOptions, mask_diff
 
 __all__ = [
     "CSVParseError", "read_csv", "index_rows",
@@ -61,7 +62,7 @@ __all__ = [
     "SampleError", "SampleOptions", "sample_diff",
     "AnnotationError", "Annotation", "AnnotatedRow",
     "ScorerError", "SimilarityScore", "score_rows", "rank_candidates",
-    "NormalizeError", "NormalizeOptions", "normalize_row",
+    "NormalizeError", "NormalizeOptions",
     "GroupError", "DiffGroup",
     "LimitError", "LimitOptions", "LimitResult",
     "MatchError", "MatchedPair", "match_orphans",
@@ -80,5 +81,6 @@ __all__ = [
     "PatchError", "Patch", "build_patch",
     "ResolveError", "ResolveOptions", "resolve_diff",
     "RenameError", "RenameOptions",
-    "CastError", "CastOptions", "cast_diff",
+    "CastError", "CastOptions",
+    "MaskError", "MaskOptions", "mask_diff",
 ]
