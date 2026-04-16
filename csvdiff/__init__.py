@@ -1,13 +1,9 @@
 """csvdiff – public re-exports."""
-
-from csvdiff.differ import (
-    CSVDiffError,
-    FieldChange,
-    RowChange,
-    DiffResult,
-    changed_fields,
-)
 from csvdiff.parser import CSVParseError, read_csv, index_rows
+from csvdiff.differ import (
+    CSVDiffError, FieldChange, RowChange, DiffResult,
+    changed_fields, diff_rows, compute_diff,
+)
 from csvdiff.formatter import format_diff
 from csvdiff.filter import FilterError, filter_columns, filter_diff_by_columns, exclude_columns
 from csvdiff.summary import DiffSummary, summarize, format_summary
@@ -19,38 +15,40 @@ from csvdiff.exporter import ExportError, export_diff
 from csvdiff.validator import ValidationError, ValidationRule, ValidationResult, validate_diff, assert_valid
 from csvdiff.reporter import DiffReport, build_report, format_report
 from csvdiff.highlighter import HighlightError, HighlightedField, highlight_diff
-from csvdiff.truncator import TruncateError, TruncateOptions, TruncateResult
+from csvdiff.truncator import TruncateError, TruncateOptions, TruncateResult, truncate_diff
 from csvdiff.sampler import SampleError, SampleOptions, sample_diff
-from csvdiff.annotator import AnnotationError, Annotation, AnnotatedRow
+from csvdiff.annotator import AnnotationError, Annotation, AnnotatedRow, annotate_diff
 from csvdiff.scorer import ScorerError, SimilarityScore, score_rows, rank_candidates
-from csvdiff.normalizer import NormalizeError, NormalizeOptions, normalize_row
-from csvdiff.grouper import GroupError, DiffGroup
-from csvdiff.limiter import LimitError, LimitOptions, LimitResult
+from csvdiff.normalizer import NormalizeError, NormalizeOptions, normalize_diff
+from csvdiff.grouper import GroupError, DiffGroup, group_by_kind, group_by_field
+from csvdiff.limiter import LimitError, LimitOptions, LimitResult, limit_diff
 from csvdiff.matcher import MatchError, MatchedPair, match_orphans
 from csvdiff.deduplicator import DeduplicateError, DeduplicateOptions, deduplicate_diff
-from csvdiff.classifier import ClassifyError, ClassifyOptions, ClassifiedChange
-from csvdiff.pivotter import PivotError, FieldPivot
-from csvdiff.ranker import RankError, RankOptions
+from csvdiff.classifier import ClassifyError, ClassifyOptions, ClassifiedChange, classify_diff
+from csvdiff.pivotter import PivotError, FieldPivot, pivot_diff
+from csvdiff.ranker import RankError, RankOptions, rank_diff
 from csvdiff.flattener import FlattenError, FlatRow, flatten_diff
-from csvdiff.splitter import SplitError, SplitOptions
-from csvdiff.partitioner import PartitionError, PartitionOptions, PartitionResult
+from csvdiff.splitter import SplitError, SplitOptions, split_diff
+from csvdiff.partitioner import PartitionError, PartitionOptions, PartitionResult, partition_diff
 from csvdiff.aggregator import AggregateError, FieldAggregate, aggregate_diff
-from csvdiff.transformer import TransformError, TransformOptions
-from csvdiff.redactor import RedactError, RedactOptions
-from csvdiff.comparer import CompareError, CompareResult
-from csvdiff.indexer import DiffIndex
-from csvdiff.differ_patch import PatchError, Patch, build_patch
+from csvdiff.transformer import TransformError, TransformOptions, transform_diff
+from csvdiff.redactor import RedactError, RedactOptions, redact_diff
+from csvdiff.comparer import CompareError, CompareResult, compare_diffs
+from csvdiff.indexer import IndexError, DiffIndex, build_index
+from csvdiff.differ_patch import PatchError, Patch, build_patch, apply_patch
 from csvdiff.resolver import ResolveError, ResolveOptions, resolve_diff
-from csvdiff.renamer import RenameError, RenameOptions
-from csvdiff.caster import CastError, CastOptions
-from csvdiff.masker import MaskError, MaskOptions
-from csvdiff.encoder import EncodeError, EncodedDiff, encode_diff
+from csvdiff.renamer import RenameError, RenameOptions, rename_diff
+from csvdiff.caster import CastError, CastOptions, cast_diff
+from csvdiff.masker import MaskError, MaskOptions, mask_diff
+from csvdiff.encoder import EncodeError, EncodedDiff, encode_diff, decode
 from csvdiff.compressor import CompressError, CompressedDiff, compress_diff, decompress_diff
-from csvdiff.freezer import FreezeError, FrozenDiff, freeze_diff, thaw_diff, checksums_match
+from csvdiff.freezer import FreezeError, FrozenDiff, freeze_diff, thaw_diff
+from csvdiff.tagger import TagError, TagOptions, TaggedChange, tag_diff, changes_with_tag
 
 __all__ = [
-    "CSVDiffError", "FieldChange", "RowChange", "DiffResult", "changed_fields",
     "CSVParseError", "read_csv", "index_rows",
+    "CSVDiffError", "FieldChange", "RowChange", "DiffResult",
+    "changed_fields", "diff_rows", "compute_diff",
     "format_diff",
     "FilterError", "filter_columns", "filter_diff_by_columns", "exclude_columns",
     "DiffSummary", "summarize", "format_summary",
@@ -62,32 +60,33 @@ __all__ = [
     "ValidationError", "ValidationRule", "ValidationResult", "validate_diff", "assert_valid",
     "DiffReport", "build_report", "format_report",
     "HighlightError", "HighlightedField", "highlight_diff",
-    "TruncateError", "TruncateOptions", "TruncateResult",
+    "TruncateError", "TruncateOptions", "TruncateResult", "truncate_diff",
     "SampleError", "SampleOptions", "sample_diff",
-    "AnnotationError", "Annotation", "AnnotatedRow",
+    "AnnotationError", "Annotation", "AnnotatedRow", "annotate_diff",
     "ScorerError", "SimilarityScore", "score_rows", "rank_candidates",
-    "NormalizeError", "NormalizeOptions", "normalize_row",
-    "GroupError", "DiffGroup",
-    "LimitError", "LimitOptions", "LimitResult",
+    "NormalizeError", "NormalizeOptions", "normalize_diff",
+    "GroupError", "DiffGroup", "group_by_kind", "group_by_field",
+    "LimitError", "LimitOptions", "LimitResult", "limit_diff",
     "MatchError", "MatchedPair", "match_orphans",
     "DeduplicateError", "DeduplicateOptions", "deduplicate_diff",
-    "ClassifyError", "ClassifyOptions", "ClassifiedChange",
-    "PivotError", "FieldPivot",
-    "RankError", "RankOptions",
+    "ClassifyError", "ClassifyOptions", "ClassifiedChange", "classify_diff",
+    "PivotError", "FieldPivot", "pivot_diff",
+    "RankError", "RankOptions", "rank_diff",
     "FlattenError", "FlatRow", "flatten_diff",
-    "SplitError", "SplitOptions",
-    "PartitionError", "PartitionOptions", "PartitionResult",
+    "SplitError", "SplitOptions", "split_diff",
+    "PartitionError", "PartitionOptions", "PartitionResult", "partition_diff",
     "AggregateError", "FieldAggregate", "aggregate_diff",
-    "TransformError", "TransformOptions",
-    "RedactError", "RedactOptions",
-    "CompareError", "CompareResult",
-    "DiffIndex",
-    "PatchError", "Patch", "build_patch",
+    "TransformError", "TransformOptions", "transform_diff",
+    "RedactError", "RedactOptions", "redact_diff",
+    "CompareError", "CompareResult", "compare_diffs",
+    "IndexError", "DiffIndex", "build_index",
+    "PatchError", "Patch", "build_patch", "apply_patch",
     "ResolveError", "ResolveOptions", "resolve_diff",
-    "RenameError", "RenameOptions",
-    "CastError", "CastOptions",
-    "MaskError", "MaskOptions",
-    "EncodeError", "EncodedDiff", "encode_diff",
+    "RenameError", "RenameOptions", "rename_diff",
+    "CastError", "CastOptions", "cast_diff",
+    "MaskError", "MaskOptions", "mask_diff",
+    "EncodeError", "EncodedDiff", "encode_diff", "decode",
     "CompressError", "CompressedDiff", "compress_diff", "decompress_diff",
-    "FreezeError", "FrozenDiff", "freeze_diff", "thaw_diff", "checksums_match",
+    "FreezeError", "FrozenDiff", "freeze_diff", "thaw_diff",
+    "TagError", "TagOptions", "TaggedChange", "tag_diff", "changes_with_tag",
 ]
