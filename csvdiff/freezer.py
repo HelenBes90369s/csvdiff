@@ -27,6 +27,14 @@ class FrozenDiff:
             "payload": json.loads(self.payload),
         }
 
+    def verify(self) -> bool:
+        """Return True if the payload matches the stored checksum.
+
+        Useful for a quick integrity check without raising an exception.
+        """
+        expected = hashlib.sha256(self.payload.encode()).hexdigest()
+        return expected == self.checksum
+
 
 def freeze_diff(result: DiffResult) -> FrozenDiff:
     """Serialise *result* to a FrozenDiff with a SHA-256 checksum."""
@@ -43,11 +51,9 @@ def thaw_diff(frozen: FrozenDiff) -> dict[str, Any]:
     """Deserialise a FrozenDiff back to a plain dict (not a DiffResult)."""
     if frozen is None:
         raise FreezeError("frozen must not be None")
-    data = json.loads(frozen.payload)
-    expected = hashlib.sha256(frozen.payload.encode()).hexdigest()
-    if expected != frozen.checksum:
+    if not frozen.verify():
         raise FreezeError("checksum mismatch: payload may have been tampered with")
-    return data
+    return json.loads(frozen.payload)
 
 
 def checksums_match(a: FrozenDiff, b: FrozenDiff) -> bool:
