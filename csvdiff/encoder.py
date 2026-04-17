@@ -1,89 +1,87 @@
-"""Encode a DiffResult into alternative serialisation formats."""
+"""Encode and decode DiffResult to/from portable formats (JSON, CSV)."""
 from __future__ import annotations
 
-import base64
+import csv
+import io
 import json
-import zlib
-from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Dict, List
 
-from csvdiff.differ import DiffResult, RowChange, FieldChange
-
-
-Encoding = Literal["json", "base64", "zlib+base64"]
+from csvdiff.differ import DiffResult, FieldChange, RowChange
 
 
 class EncodeError(Exception):
-    """Raised when encoding fails."""
+    """Raised when encoding or decoding fails."""
 
 
-@dataclass(frozen=True)
-class EncodedDiff:
-    encoding: Encoding
-    data: str
-
-    def decode(self) -> DiffResult:
-        return decode_diff(self)
+def fc_to_dict(fc: FieldChange) -> Dict[str, Any]:
+    return {"field": fc.field, "old_value": fc.old_value, "new_value": fc.new_value}
 
 
-def _result_to_dict(result: DiffResult) -> dict:
-    def fc_to_dict(fc: FieldChange) -> dict:
-        return {"field": fc.field, "old": fc.old_value, "new": fc.new_value}
+def dict_to_fc(d: Dict[str, Any]) -> FieldChange:
+    return FieldChange(field=d["field"], old_value=d["old_value"], new_value=d["new_value"])
 
-    def rc_to_dict(rc: RowChange) -> dict:
-        return {
-            "key": list(rc.key),
-            "kind": rc.kind,
-            "old_row": rc.old_row,
-            "new_row": rc.new_row,
-            "changes": [fc_to_dict(f) for f in rc.changes],
-        }
 
+def _result_to_dict(result: DiffResult) -> Dict[str, Any]:
     return {
-        "added": [rc_to_dict(r) for r in result.added],
-        "removed": [rc_to_dict(r) for r in result.removed],
-        "changed": [rc_to_dict(r) for r in result.changed],
+        "added": result.added,
+        "removed": result.removed,
+        "changed": [
+            {
+                "key": list(c.key),
+                "field_changes": [fc_to_dict(fc) for fc in c.field_changes],
+            }
+            for c in result.changed
+        ],
     }
 
 
-def _dict_to_result(d: dict) -> DiffResult:
-    def to_rc(r: dict) -> RowChange:
-        return RowChange(
-            key=tuple(r["key"]),
-            kind=r["kind"],
-            old_row=r["old_row"],
-            new_row=r["new_row"],
-            changes=[FieldChange(f["field"], f["old"], f["new"]) for f in r["changes"]],
+def _dict_to_result(d: Dict[str, Any]) -> DiffResult:
+    changed = [
+        RowChange(
+            key=tuple(c["key"]),
+            field_changes=[dict_to_fc(fc) for fc in c["field_changes"]],
         )
-
+        for c in d.get("changed", [])
+    ]
     return DiffResult(
-        added=[to_rc(r) for r in d["added"]],
-        removed=[to_rc(r) for r in d["removed"]],
-        changed=[to_rc(r) for r in d["changed"]],
+        added=d.get("added", []),
+        removed=d.get("removed", []),
+        changed=changed,
     )
 
 
-def encode_diff(result: DiffResult, encoding: Encoding = "json") -> EncodedDiff:
+def encode_diff(result: DiffResult, fmt: str = "json") -> str:
+    """Serialise *result* to a string in the requested *fmt* (``json`` or ``csv``)."""
     if result is None:
         raise EncodeError("result must not be None")
-    raw = json.dumps(_result_to_dict(result), separators=(",", ":"))
-    if encoding == "json":
-        return EncodedDiff(encoding=encoding, data=raw)
-    if encoding == "base64":
-        return EncodedDiff(encoding=encoding, data=base64.b64encode(raw.encode()).decode())
-    if encoding == "zlib+base64":
-        compressed = zlib.compress(raw.encode())
-        return EncodedDiff(encoding=encoding, data=base64.b64encode(compressed).decode())
-    raise EncodeError(f"Unknown encoding: {encoding!r}")
+    if fmt == "json":
+        return json.dumps(_result_to_dict(result), indent=2)
+    if fmt == "csv":
+        return _render_csv(result)
+    raise EncodeError(f"Unknown format: {fmt!r}")
 
 
-def decode_diff(encoded: EncodedDiff) -> DiffResult:
-    if encoded.encoding == "json":
-        raw = encoded.data
-    elif encoded.encoding == "base64":
-        raw = base64.b64decode(encoded.data).decode()
-    elif encoded.encoding == "zlib+base64":
-        raw = zlib.decompress(base64.b64decode(encoded.data)).decode()
-    else:
-        raise EncodeError(f"Unknown encoding: {encoded.encoding!r}")
-    return _dict_to_result(json.loads(raw))
+def decode(payload: str) -> DiffResult:
+    """Deserialise a JSON *payload* produced by :func:`encode_diff`."""
+    if not payload:
+        raise EncodeError("payload must not be empty")
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise EncodeError(f"Invalid JSON: {exc}") from exc
+    return _dict_to_result(data)
+
+
+def _render_csv(result: DiffResult) -> str:
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["kind", "key", "field", "old_value", "new_value"])
+    for row in result.added:
+        writer.writerow(["added", "", "", "", json.dumps(row)])
+    for row in result.removed:
+        writer.writerow(["removed", "", "", json.dumps(row), ""])
+    for change in result.changed:
+        key_str = "|".join(change.key)
+        for fc in change.field_changes:
+            writer.writerow(["changed", key_str, fc.field, fc.old_value, fc.new_value])
+    return buf.getvalue()
