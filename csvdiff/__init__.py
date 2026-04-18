@@ -1,4 +1,5 @@
-"""csvdiff public API — re-exports core symbols."""
+"""csvdiff public API — re-exports key symbols."""
+
 from csvdiff.parser import CSVParseError, read_csv, index_rows
 from csvdiff.differ import (
     CSVDiffError,
@@ -9,14 +10,15 @@ from csvdiff.differ import (
 )
 from csvdiff.formatter import format_diff
 from csvdiff.filter import FilterError, filter_columns, filter_diff_by_columns, exclude_columns
+from csvdiff.summary import DiffSummary, summarize, format_summary
 from csvdiff.pager import DiffPage, paginate_diff, page_to_diff_result
 from csvdiff.sorter import SortError, sort_diff, sort_keys
-from csvdiff.merger import MergeError, merge_diff, row_key
+from csvdiff.merger import MergeError, merge_diff
 from csvdiff.stats import DiffStats, compute_stats
 from csvdiff.exporter import ExportError, export_diff
-from csvdiff.validator import ValidationError, ValidationRule, ValidationResult, validate_diff, assert_valid
+from csvdiff.validator import ValidationError, ValidationRule, validate_diff, assert_valid
 from csvdiff.reporter import DiffReport, build_report, format_report
-from csvdiff.highlighter import HighlightError, HighlightedField, render, highlight_diff
+from csvdiff.highlighter import HighlightError, HighlightedField, highlight_diff
 from csvdiff.truncator import TruncateError, TruncateOptions, TruncateResult
 from csvdiff.sampler import SampleError, SampleOptions, sample_diff
 from csvdiff.annotator import AnnotationError, Annotation, AnnotatedRow
@@ -45,30 +47,37 @@ from csvdiff.masker import MaskError, MaskOptions
 from csvdiff.encoder import EncodeError, encode_diff, decode_diff
 from csvdiff.compressor import CompressError, CompressedDiff, compress_diff, decompress_diff
 from csvdiff.freezer import FreezeError, FrozenDiff, freeze_diff
-from csvdiff.tagger import TagError, TagOptions, TaggedChange, tag_diff
+from csvdiff.tagger import TagError, TagOptions, tag_diff
 from csvdiff.trimmer import TrimError, TrimOptions
-from csvdiff.labeler import LabelError, LabelRule, LabelOptions
+from csvdiff.labeler import LabelError, LabelOptions
 from csvdiff.snapshotter import SnapshotError, SnapshotMeta, save_snapshot, load_snapshot
-from csvdiff.pruner import PruneError, PruneOptions, PruneResult, prune_diff
+from csvdiff.pruner import PruneError, PruneOptions, prune_diff
 from csvdiff.scorer2 import WeightError, WeightOptions, ScoredChange
 from csvdiff.joiner import JoinError, JoinOptions, join_diff
-from csvdiff.scaler import ScaleError, ScaledField, ScaledChange
+from csvdiff.scaler import ScaleError, ScaledChange
 from csvdiff.aligner import AlignError, AlignedPair, align_diff
-from csvdiff.windower import WindowError, WindowOptions, DiffWindow, window_diff, total_windows
+from csvdiff.windower import WindowError, WindowOptions, DiffWindow
+from csvdiff.differ_cache import CacheError, CacheOptions
+from csvdiff.differ_watch import WatchError, WatchOptions, WatchState
+from csvdiff.differ_timeout import TimeoutError, TimeoutOptions, run_with_timeout
+from csvdiff.differ_retry import RetryError, RetryOptions, run_with_retry
+from csvdiff.differ_progress import ProgressError, ProgressOptions, ProgressState
+from csvdiff.differ_throttle import ThrottleError, ThrottleOptions, ThrottleState, throttled_run
 
 __all__ = [
     "CSVParseError", "read_csv", "index_rows",
     "CSVDiffError", "FieldChange", "RowChange", "DiffResult", "changed_fields",
     "format_diff",
     "FilterError", "filter_columns", "filter_diff_by_columns", "exclude_columns",
+    "DiffSummary", "summarize", "format_summary",
     "DiffPage", "paginate_diff", "page_to_diff_result",
     "SortError", "sort_diff", "sort_keys",
-    "MergeError", "merge_diff", "row_key",
+    "MergeError", "merge_diff",
     "DiffStats", "compute_stats",
     "ExportError", "export_diff",
-    "ValidationError", "ValidationRule", "ValidationResult", "validate_diff", "assert_valid",
+    "ValidationError", "ValidationRule", "validate_diff", "assert_valid",
     "DiffReport", "build_report", "format_report",
-    "HighlightError", "HighlightedField", "render", "highlight_diff",
+    "HighlightError", "HighlightedField", "highlight_diff",
     "TruncateError", "TruncateOptions", "TruncateResult",
     "SampleError", "SampleOptions", "sample_diff",
     "AnnotationError", "Annotation", "AnnotatedRow",
@@ -97,14 +106,20 @@ __all__ = [
     "EncodeError", "encode_diff", "decode_diff",
     "CompressError", "CompressedDiff", "compress_diff", "decompress_diff",
     "FreezeError", "FrozenDiff", "freeze_diff",
-    "TagError", "TagOptions", "TaggedChange", "tag_diff",
+    "TagError", "TagOptions", "tag_diff",
     "TrimError", "TrimOptions",
-    "LabelError", "LabelRule", "LabelOptions",
+    "LabelError", "LabelOptions",
     "SnapshotError", "SnapshotMeta", "save_snapshot", "load_snapshot",
-    "PruneError", "PruneOptions", "PruneResult", "prune_diff",
+    "PruneError", "PruneOptions", "prune_diff",
     "WeightError", "WeightOptions", "ScoredChange",
     "JoinError", "JoinOptions", "join_diff",
-    "ScaleError", "ScaledField", "ScaledChange",
+    "ScaleError", "ScaledChange",
     "AlignError", "AlignedPair", "align_diff",
-    "WindowError", "WindowOptions", "DiffWindow", "window_diff", "total_windows",
+    "WindowError", "WindowOptions", "DiffWindow",
+    "CacheError", "CacheOptions",
+    "WatchError", "WatchOptions", "WatchState",
+    "TimeoutError", "TimeoutOptions", "run_with_timeout",
+    "RetryError", "RetryOptions", "run_with_retry",
+    "ProgressError", "ProgressOptions", "ProgressState",
+    "ThrottleError", "ThrottleOptions", "ThrottleState", "throttled_run",
 ]
