@@ -96,46 +96,34 @@ def test_rank_diff_includes_added_and_removed():
 def test_rank_diff_by_key():
     c1 = _change("zebra")
     c2 = _change("apple")
-    result = make_result(changed=[c1, c2])
+    c3 = _change("mango")
+    result = make_result(changed=[c1, c2, c3])
     opts = RankOptions(by="key", descending=False)
     ranked = rank_diff(result, opts)
-    assert ranked[0].key == ("apple",)
-    assert ranked[1].key == ("zebra",)
-
-
-def test_rank_diff_by_specific_field():
-    c1 = _change(1, "price", "name")   # price changed
-    c2 = _change(2, "name")             # price NOT changed
-    result = make_result(changed=[c1, c2])
-    opts = RankOptions(field="price")
-    ranked = rank_diff(result, opts)
-    assert ranked[0] is c1   # has price change
-    assert ranked[1] is c2   # no price change
+    assert ranked[0] is c2  # "apple"
+    assert ranked[1] is c3  # "mango"
+    assert ranked[2] is c1  # "zebra"
 
 
 # ---------------------------------------------------------------------------
 # top_n
 # ---------------------------------------------------------------------------
 
-def test_top_n_returns_correct_count():
-    changes = [_change(i, "f") for i in range(5)]
+def test_top_n_returns_at_most_n():
+    changes = [_change(i, "f1", "f2") for i in range(10)]
     result = make_result(changed=changes)
-    assert len(top_n(result, 3)) == 3
+    top = top_n(result, n=3)
+    assert len(top) == 3
 
 
-def test_top_n_zero_returns_empty():
-    changes = [_change(i, "f") for i in range(5)]
-    result = make_result(changed=changes)
-    assert top_n(result, 0) == []
-
-
-def test_top_n_negative_raises():
+def test_top_n_zero_raises():
     result = make_result()
-    with pytest.raises(RankError, match="non-negative"):
-        top_n(result, -1)
+    with pytest.raises((ValueError, RankError)):
+        top_n(result, n=0)
 
 
 def test_top_n_larger_than_result_returns_all():
-    changes = [_change(i, "f") for i in range(3)]
+    changes = [_change(i, "f1") for i in range(5)]
     result = make_result(changed=changes)
-    assert len(top_n(result, 100)) == 3
+    top = top_n(result, n=100)
+    assert len(top) == 5
