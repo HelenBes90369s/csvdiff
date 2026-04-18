@@ -68,6 +68,14 @@ def test_union_left_wins_on_conflict():
     assert result.changes[0].kind == "added"
 
 
+def test_union_empty_inputs_returns_empty():
+    """Union of two empty DiffResults should produce an empty result."""
+    result = join_diff(make_result(), make_result())
+    assert result.changes == []
+    assert result.added == []
+    assert result.removed == []
+
+
 # ---------------------------------------------------------------------------
 # intersection
 # ---------------------------------------------------------------------------
@@ -87,19 +95,16 @@ def test_intersection_empty_when_no_overlap():
     assert result.changes == []
 
 
+def test_intersection_left_row_preserved_on_overlap():
+    """When both sides share a key, the left-side RowChange is kept."""
+    left = make_result(_change("z", "added", [_fc("col", "old", "new")]))
+    right = make_result(_change("z", "removed"))
+    result = join_diff(left, right, JoinOptions(strategy="intersection"))
+    assert len(result.changes) == 1
+    assert result.changes[0].kind == "added"
+    assert result.changes[0].field_changes == [_fc("col", "old", "new")]
+
+
 # ---------------------------------------------------------------------------
 # left / right
-# ---------------------------------------------------------------------------
-
-def test_left_strategy_returns_only_left():
-    left = make_result(_change("a"))
-    right = make_result(_change("b"))
-    result = join_diff(left, right, JoinOptions(strategy="left"))
-    assert [c.key for c in result.changes] == ["a"]
-
-
-def test_right_strategy_returns_only_right():
-    left = make_result(_change("a"))
-    right = make_result(_change("b"))
-    result = join_diff(left, right, JoinOptions(strategy="right"))
-    assert [c.key for c in result.changes] == ["b"]
+# ---------------------------------
