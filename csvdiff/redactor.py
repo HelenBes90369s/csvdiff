@@ -29,6 +29,11 @@ class RedactOptions:
             raise RedactError("placeholder must not be empty")
 
 
+def _redact_value(value: Optional[str], placeholder: str) -> Optional[str]:
+    """Return placeholder if value is not None, otherwise None."""
+    return placeholder if value is not None else None
+
+
 def _redact_row(row: Optional[Dict[str, str]], opts: RedactOptions) -> Optional[Dict[str, str]]:
     if row is None:
         return None
@@ -47,8 +52,8 @@ def _redact_field_changes(
             result.append(
                 FieldChange(
                     field=fc.field,
-                    old_value=opts.placeholder if fc.old_value is not None else None,
-                    new_value=opts.placeholder if fc.new_value is not None else None,
+                    old_value=_redact_value(fc.old_value, opts.placeholder),
+                    new_value=_redact_value(fc.new_value, opts.placeholder),
                 )
             )
         else:
