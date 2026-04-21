@@ -1,21 +1,34 @@
 """csvdiff – public re-exports."""
-from csvdiff.differ import DiffResult, RowChange, FieldChange, DiffResult  # noqa: F811
-from csvdiff.parser import read_csv, index_rows
+from csvdiff.differ import (
+    CSVDiffError,
+    DiffResult,
+    FieldChange,
+    RowChange,
+    changed_fields,
+)
+from csvdiff.parser import CSVParseError, index_rows, read_csv
 from csvdiff.formatter import format_diff
-from csvdiff.differ_metrics import (
-    MetricsOptions,
-    DiffMetrics,
-    collect_metrics,
+from csvdiff.differ_replay import (
+    ReplayError,
+    ReplayOptions,
+    ReplayRecord,
+    ReplayResult,
+    replay_diff,
 )
 
 __all__ = [
+    "CSVDiffError",
+    "CSVParseError",
     "DiffResult",
-    "RowChange",
     "FieldChange",
-    "read_csv",
-    "index_rows",
+    "RowChange",
+    "changed_fields",
     "format_diff",
-    "MetricsOptions",
-    "DiffMetrics",
-    "collect_metrics",
+    "index_rows",
+    "read_csv",
+    "ReplayError",
+    "ReplayOptions",
+    "ReplayRecord",
+    "ReplayResult",
+    "replay_diff",
 ]
