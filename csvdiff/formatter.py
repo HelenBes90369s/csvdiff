@@ -14,7 +14,17 @@ def format_diff(
     fmt: str = "text",
     out: TextIO = sys.stdout,
 ) -> None:
-    """Write formatted diff to *out*."""
+    """Write formatted diff to *out*.
+
+    Args:
+        result: The diff result containing added, removed, and changed rows.
+        summary: Optional summary statistics to include in the output.
+        fmt: Output format; one of ``"text"``, ``"json"``, or ``"csv"``.
+        out: File-like object to write output to (defaults to stdout).
+
+    Raises:
+        ValueError: If *fmt* is not a recognised format string.
+    """
     if fmt == "text":
         _format_text(result, summary, out)
     elif fmt == "json":
@@ -83,9 +93,9 @@ def _format_json(
 def _format_csv(result: DiffResult, out: TextIO) -> None:
     out.write("change_type,key,field,old_value,new_value\n")
     for row in result.added:
-        out.write(f"added,{_row_str(row)},,, \n")
+        out.write(f"added,{_row_str(row)},,,\n")
     for row in result.removed:
-        out.write(f"removed,{_row_str(row)},,, \n")
+        out.write(f"removed,{_row_str(row)},,,\n")
     for change in result.changed:
         key = _key_str(change.key)
         out.write(f"changed,{key},{change.field},{change.old_value},{change.new_value}\n")
