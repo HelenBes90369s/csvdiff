@@ -101,12 +101,14 @@ def test_deduplicate_different_field_changes_kept_separate():
     assert len(out.changes) == 2
 
 
-def test_deduplicate_preserves_added_removed_lists():
-    result = DiffResult(
-        added=[{"id": "Z"}],
-        removed=[{"id": "Y"}],
-        changes=[],
-    )
+def test_deduplicate_preserves_added_and_removed():
+    """Deduplication of changes must not affect the added/removed lists."""
+    added = [_change(("X",), "added")]
+    removed = [_change(("Y",), "removed")]
+    c1 = _change(("A",), "changed", [_fc("x", "1", "2")])
+    c2 = _change(("A",), "changed", [_fc("x", "1", "2")])
+    result = DiffResult(added=added, removed=removed, changes=[c1, c2])
     out = deduplicate_diff(result)
-    assert out.added == [{"id": "Z"}]
-    assert out.removed == [{"id": "Y"}]
+    assert out.added == added
+    assert out.removed == removed
+    assert len(out.changes) == 1
