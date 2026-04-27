@@ -46,6 +46,15 @@ class RateState:
         self._purge_old(time.monotonic())
         return len(self._timestamps)
 
+    @property
+    def remaining(self) -> int:
+        """Return how many more calls are allowed in the current window."""
+        return max(0, self.options.max_calls - self.call_count)
+
+    def reset(self) -> None:
+        """Clear all recorded timestamps, fully resetting the rate window."""
+        self._timestamps = []
+
 
 def rate_limited(
     fn: Callable[[], DiffResult],
