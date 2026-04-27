@@ -1,7 +1,6 @@
 # csvdiff
 
-A fast CLI tool for diffing two CSV files with configurable key columns and
-output formats.
+A fast CLI tool for diffing two CSV files with configurable key columns and output formats.
 
 ## Installation
 
@@ -9,7 +8,7 @@ output formats.
 pip install csvdiff
 ```
 
-## Quick start
+## Quick Start
 
 ```bash
 csvdiff old.csv new.csv --key id
@@ -17,138 +16,136 @@ csvdiff old.csv new.csv --key id,name --format json
 csvdiff old.csv new.csv --key id --format csv --output diff.csv
 ```
 
-## Output formats
+## CLI Options
 
-| Flag | Description |
-|------|-------------|
-| `text` (default) | Human-readable coloured diff |
-| `json` | Machine-readable JSON |
-| `csv` | CSV with a `_change` type column |
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--key` | `id` | Comma-separated key columns |
+| `--format` | `text` | Output format: `text`, `json`, `csv` |
+| `--output` | stdout | Write output to file |
+| `--columns` | all | Restrict diff to these columns |
+| `--exclude` | none | Exclude these columns from diff |
+| `--ignore-case` | off | Case-insensitive comparison |
+| `--strip` | off | Strip whitespace before comparing |
 
-## Exit codes
+## Exit Codes
 
 | Code | Meaning |
 |------|---------|
 | 0 | No differences found |
 | 1 | Differences found |
-| 2 | Error (missing file, parse error, …) |
+| 2 | Error (missing file, bad CSV, etc.) |
 
 ## Python API
 
 ```python
-from csvdiff import read_csv, index_rows
-from csvdiff.differ import compute_diff
-from csvdiff.formatter import format_diff
+from csvdiff import read_csv, index_rows, compute_diff
 
 old_rows = read_csv("old.csv")
 new_rows = read_csv("new.csv")
-result = compute_diff(index_rows(old_rows, ["id"]), index_rows(new_rows, ["id"]))
-print(format_diff(result, fmt="text"))
+old_index = index_rows(old_rows, keys=["id"])
+new_index = index_rows(new_rows, keys=["id"])
+result = compute_diff(old_index, new_index)
 ```
 
-### Replay pipeline
+## Signal / Lifecycle Hooks
 
-Chain post-processing steps over a `DiffResult` with `replay_diff`:
+`SignalOptions` lets you attach callbacks to diff lifecycle events without
+modifying the core pipeline.
 
 ```python
-from csvdiff.differ_replay import ReplayOptions, replay_diff
-from csvdiff.filter import filter_diff_by_columns
-from csvdiff.sorter import sort_diff
-from functools import partial
+from csvdiff import SignalOptions, SignalState, emit_diff_signals
 
-opts = ReplayOptions(
-    steps=[
-        partial(filter_diff_by_columns, columns=["name", "email"]),
-        partial(sort_diff, key="name"),
-    ],
-    label="my-pipeline",
+def on_changed(result):
+    print(f"Changes detected: {len(result.changed)} rows modified")
+
+opts = SignalOptions(
+    handlers={
+        "on_changed": [on_changed],
+        "on_empty": [lambda r: print("Files are identical")],
+    }
 )
-replay = replay_diff(result, opts)
-print(replay.final)
-print(replay.all_ok)   # True if every step succeeded
+state = SignalState(options=opts)
+
+# After running your diff:
+emit_diff_signals(state, diff_result)
 ```
+
+### Available Signals
+
+| Signal | Fired when |
+|--------|------------|
+| `pre_diff` | Before diffing starts (fire manually) |
+| `post_diff` | After every successful diff |
+| `on_empty` | Result has no changes |
+| `on_changed` | Result has at least one change |
+| `on_error` | An error occurred during diffing |
 
 ## Modules
 
 | Module | Purpose |
 |--------|---------|
-| `parser` | Read & index CSV files |
+| `parser` | Read and index CSV files |
 | `differ` | Core diff algorithm |
 | `formatter` | Text / JSON / CSV output |
-| `filter` | Column filtering |
-| `sorter` | Sort diff rows |
-| `merger` | Merge diffs |
-| `stats` | Aggregate statistics |
-| `exporter` | Export to file |
-| `validator` | Rule-based validation |
-| `reporter` | High-level report builder |
-| `highlighter` | ANSI colour highlighting |
+| `filter` | Column inclusion/exclusion |
+| `summary` | High-level change summary |
 | `pager` | Paginate large diffs |
-| `sampler` | Random / head / tail sampling |
-| `annotator` | Attach metadata annotations |
+| `sorter` | Sort diff results |
+| `merger` | Apply a diff back to a dataset |
+| `stats` | Numeric statistics over a diff |
+| `exporter` | Export diff to file formats |
+| `validator` | Enforce rules on a diff |
+| `reporter` | Structured diff reports |
+| `highlighter` | ANSI colour highlighting |
+| `truncator` | Truncate long field values |
+| `sampler` | Random / top-N sampling |
+| `annotator` | Attach metadata to changes |
 | `scorer` | Row similarity scoring |
-| `normalizer` | Value normalisation |
-| `grouper` | Group changes by kind/field |
+| `normalizer` | Pre-diff value normalisation |
+| `grouper` | Group changes by kind or field |
 | `limiter` | Hard caps on change counts |
-| `matcher` | Match orphaned adds/removes |
-| `deduplicator` | Remove duplicate rows |
+| `matcher` | Match orphaned add/remove pairs |
+| `deduplicator` | Remove duplicate change rows |
 | `classifier` | Severity classification |
-| `pivotter` | Field-level pivot tables |
-| `ranker` | Rank rows by change count |
-| `flattener` | Flatten to list of dicts |
+| `pivotter` | Pivot field-level changes |
+| `ranker` | Rank rows by change magnitude |
+| `flattener` | Flatten diff to plain rows |
 | `splitter` | Split diff by column value |
-| `partitioner` | Partition into buckets |
-| `aggregator` | Numeric field aggregation |
-| `transformer` | Apply column transforms |
-| `redactor` | Redact sensitive columns |
-| `comparer` | Compare two diffs |
-| `indexer` | Random-access index |
-| `differ_patch` | Patch / apply operations |
-| `resolver` | Conflict resolution |
-| `renamer` | Column rename mapping |
-| `caster` | Type casting |
-| `masker` | Value masking |
-| `encoder` | JSON serialisation |
-| `compressor` | gzip compression |
-| `freezer` | Immutable snapshot + checksum |
+| `partitioner` | Partition diff into buckets |
+| `aggregator` | Numeric aggregation per field |
+| `transformer` | Apply transforms to row values |
+| `redactor` | Redact sensitive fields |
+| `comparer` | Compare two diff results |
+| `indexer` | Random-access index over a diff |
+| `differ_patch` | Patch-set representation |
+| `resolver` | Conflict resolution strategies |
+| `renamer` | Rename columns in a diff |
+| `caster` | Type-cast field values |
+| `masker` | Mask field values |
+| `encoder` | JSON serialisation round-trip |
+| `compressor` | In-memory diff compression |
+| `freezer` | Immutable signed snapshots |
 | `tagger` | Rule-based tagging |
 | `trimmer` | Whitespace trimming |
-| `labeler` | Attach human labels |
-| `snapshotter` | Save/load snapshots to disk |
+| `labeler` | Human-readable labels |
+| `snapshotter` | Persist diff to disk |
 | `pruner` | Predicate-based pruning |
 | `scorer2` | Weighted change scoring |
-| `joiner` | Join two diffs |
+| `joiner` | Join two diff results |
 | `scaler` | Numeric delta scaling |
-| `aligner` | Align two diffs by key |
-| `windower` | Sliding-window view |
-| `differ_cache` | File-based result cache |
-| `differ_watch` | Poll-based file watcher |
-| `differ_timeout` | Timeout wrapper |
-| `differ_retry` | Retry with back-off |
-| `differ_progress` | Progress tracking |
-| `differ_throttle` | Call-rate throttling |
-| `differ_batch` | Batch processing |
-| `differ_audit` | Audit log entries |
-| `differ_hook` | Before/after hooks |
-| `differ_schema` | Column schema inference |
-| `differ_log` | Structured logging |
-| `differ_pipeline` | Linear step pipeline |
-| `differ_metrics` | Metrics collection |
-| `differ_event` | Event bus |
-| `differ_debounce` | Debounce rapid changes |
-| `differ_lock` | File-based locking |
-| `differ_notify` | Notification dispatch |
-| `differ_rate` | Rate limiting |
-| `differ_checkpoint` | Checkpoint / resume |
-| `differ_queue` | Work queue |
-| `differ_pool` | Worker pool |
-| `differ_dispatcher` | Route to handlers |
-| `differ_circuit` | Circuit breaker |
-| `differ_replay` | Replay through transform pipeline |
+| `aligner` | Align two diff results |
+| `windower` | Sliding-window views |
+| `differ_signal` | Lifecycle signal callbacks |
 
 ## Contributing
 
-Pull requests welcome. Please add tests for any new module.
+```bash
+git clone https://github.com/example/csvdiff
+cd csvdiff
+pip install -e .[dev]
+pytest
+```
 
 ## Licence
 
